@@ -1,0 +1,38 @@
+# Proje dosyaları için .gitignore
+# Gereksiz ve kişisel dosyaların GitHub'a gönderilmesini engeller
+
+# Arşiv klasörü
+Arsiv/
+
+# Modeller klasörü (boyutları büyük olabilir ve hassas olabilir)
+Modeller/
+
+# Kişisel kalibrasyon ayarları
+implicit_bias.npz
+
+# Sanal ortam klasörleri
+.venv/
+gaze_final/
+gaze_final_venv/
+gaze_venv/
+
+# Python derleme önbellekleri
+__pycache__/
+*.pyc
+*.pyd
+
+# IDE ve Editör ayarları (örn. IntelliJ / VSCode)
+.idea/
+.vs/
+*.iml
+*.iws
+*.ipr
+
+# Test videoları ve logları
+test_video.avi
+*.log
+*.csv
+*.png # Bakış haritaları ve debug görüntüleri
+
+# İşlenmiş veri setleri
+*.npz

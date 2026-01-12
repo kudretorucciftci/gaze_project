@@ -63,16 +63,19 @@ class BiasMap:
             np.clip(y + self.by[iy, ix], 0, 1),
         )
 
-    def learn(self, x, y, dx, dy, weight=1.0):
+    def learn(self, x, y, dx, dy, weight=1.0, learning_rate=None):
         if abs(dx) + abs(dy) < 1e-4:
             return
+        
+        lr_to_use = learning_rate if learning_rate is not None else self.lr
+
         ix, iy = self._cell(x, y)
         self.bx[iy, ix] = np.clip(
-            self.bx[iy, ix] + dx * self.lr * weight,
+            self.bx[iy, ix] + dx * lr_to_use * weight,
             -self.maxb, self.maxb
         )
         self.by[iy, ix] = np.clip(
-            self.by[iy, ix] + dy * self.lr * weight,
+            self.by[iy, ix] + dy * lr_to_use * weight,
             -self.maxb, self.maxb
         )
 

@@ -1,0 +1,6 @@
+opencv-contrib-python
+mediapipe
+
+numpy
+pyautogui
+pandas

@@ -1,0 +1,11 @@
+# CHANGELOG
+
+## 18-10-2022
+
+### Added
+- Changelog
+
+### Changed
+- Updated license to BY-NC-SA 4.0. 
+- Updated email address for contact
+- Updated ReadMe with more detailed information
