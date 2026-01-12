@@ -34,5 +34,5 @@ test_video.avi
 *.csv
 *.png # Bakış haritaları ve debug görüntüleri
 
-# İşlenmiş veri setleri
-*.npz
+# Ham veri seti klasörü (eğer açılırsa)
+MPIIGaze/
