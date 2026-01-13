@@ -6,6 +6,7 @@ Arsiv/
 
 # Modeller klasörü (boyutları büyük olabilir ve hassas olabilir)
 Modeller/
+Egitim/
 
 # Kişisel kalibrasyon ayarları
 implicit_bias.npz

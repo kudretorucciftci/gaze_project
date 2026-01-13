@@ -131,6 +131,9 @@ def main():
     # Başlangıç ve durum değişkenleri
     nx, ny = 0.5, 0.5
     was_fixating = False
+    # --- Göz Kırpma ile Tıklama Ayarları ---
+    BLINK_THRESHOLD = 0.01  # Gözün kapanma eşiği (küçük değer = daha kapalı)
+    CLICK_COOLDOWN = 1.5    # Tıklamalar arası bekleme süresi (saniye)
     last_click_time = 0
     
     cap = cv2.VideoCapture(0)
@@ -198,13 +201,13 @@ def main():
                         final_x = np.clip(nx_b, 0, 1)
                         final_y = np.clip(ny_b, 0, 1)
                         pyautogui.moveTo(final_x * screen_w, final_y * screen_h, duration=0.1)
-                    
+
                     # --- Göz Kırpma ile Tıklama ---
                     left_top = lm[159]
                     left_bottom = lm[145]
                     blink_ratio = left_bottom.y - left_top.y
                     
-                    if blink_ratio < 0.01 and (time.time() - last_click_time) > 1.5:
+                    if blink_ratio < BLINK_THRESHOLD and (time.time() - last_click_time) > CLICK_COOLDOWN:
                         pyautogui.click()
                         last_click_time = time.time()
                         print(">>> CLICK <<<")
