@@ -27,18 +27,20 @@ Projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin.
    cd gaze_project
    ```
 
-2. **Python Sanal Ortamı Oluşturun ve Aktive Edin:**
-   Bu proje, belirli kütüphane sürümlerine ihtiyaç duymaktadır. Kütüphanelerin sistem genelindeki paketlerle çakışmaması için bir sanal ortam kullanılması şiddetle tavsiye edilir.
+2. **Model Dosyasını İndirin:**
+   Projenin ihtiyaç duyduğu eğitilmiş model dosyasına aşağıdaki linkten erişip indirin ve projenin ana dizinine (`.py` dosyalarıyla aynı yere) kopyalayın.
+   - **Modeli İndir:** [mpiigaze_finetuned.keras](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
 
+3. **Python Sanal Ortamı Oluşturun ve Aktive Edin:**
+   Bu proje, belirli kütüphane sürümlerine ihtiyaç duymaktadır. Kütüphanelerin sistem genelindeki paketlerle çakışmaması için bir sanal ortam kullanılması şiddetle tavsiye edilir.
    ```sh
    # Windows
    python -m venv gaze_final
    .\gaze_final\Scripts\activate
    ```
 
-3. **Bağımlılıkları Yükleyin:**
+4. **Bağımlılıkları Yükleyin:**
    Proje için gerekli tüm kütüphaneler `requirements.txt` dosyasında listelenmiştir. Bunları aşağıdaki komutla yükleyin:
-
    ```sh
    pip install -r requirements.txt
    ```
@@ -46,14 +48,24 @@ Projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin.
 ## 🏃‍♀️ Kullanım
 
 Kurulum tamamlandıktan sonra, ana uygulamayı çalıştırmak için aşağıdaki komutu kullanın:
-
 ```sh
 python ana_hat.py
 ```
 
+### Kamera Seçimi
+Proje varsayılan olarak sistemdeki ilk kamerayı (genellikle 0 ID'li) kullanır. Eğer telefonunuzu (örneğin **iVCam** gibi uygulamalarla) veya başka bir harici kamerayı kullanıyorsanız, `ana_hat.py` dosyasındaki `cap = cv2.VideoCapture(0)` satırındaki `0` değerini, kullandığınız kameranın bilgisayarınızdaki cihaz ID'sine (`0`, `1`, `2` vb.) göre değiştirmeniz gerekebilir.
+
 Uygulama başladığında web kameranız açılacak ve ekranda bir pencere görünecektir. İmleciniz, göz hareketlerinizi takip etmeye başlayacaktır.
 
 Uygulamayı kapatmak için kamera penceresi etkinken klavyeden `ESC` tuşuna basmanız yeterlidir.
+
+## 🛠️ Yöntem ve Model
+
+Bu proje, birkaç farklı teknolojiyi bir araya getirir:
+
+- **Yüz ve Göz Tespiti:** Yüz ve gözlerin kritik noktalarını (landmarks) gerçek zamanlı olarak tespit etmek için **Google Mediapipe** kütüphanesi kullanılmaktadır.
+- **Bakış Tahmini:** Göz bölgesinden alınan görüntü, **MPIIGaze** veri seti üzerinde önceden eğitilmiş ve daha sonra kullanıcı verileriyle ince ayar (fine-tuning) yapılmış bir **TensorFlow/Keras** modeli (`mpiigaze_finetuned.keras`) tarafından işlenir. Bu model, göz görüntüsünden bakışın yönünü (pitch ve yaw açıları) tahmin eder.
+- **İmleç Kontrolü:** Modelden gelen tahminler, bir dizi filtreleme ve yumuşatma işleminden geçirilerek fare imlecinin akıcı bir şekilde hareket etmesi sağlanır.
 
 ## ⚙️ Yapılandırma
 
