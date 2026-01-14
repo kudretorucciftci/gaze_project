@@ -10,7 +10,7 @@ Bu proje, bir web kamerası kullanarak gerçek zamanlı olarak kullanıcının g
 - **Gelişmiş Göz Hareketleriyle Kontrol:**
   - **Sol Tıklama:** Normal (çift gözle) kısa göz kırpma hareketi ile.
   - **Sağ Tıklama:** Sadece sağ gözü kırpma hareketi ile.
-  - **Yakınlaştırma (Zoom In):** Gözleri kısma hareketi ile.
+  - **Yakınlaştırma (Zoom In):** Her iki gözü kısma hareketi ile.
   - **Uzaklaştırma (Zoom Out):** Uzun göz kırpma (gözleri 1 saniyeden uzun süre kapalı tutma) ile.
   - **Akıcı Sayfa Kaydırma:** Ekranın üst veya alt kenarlarına odaklanarak.
 
@@ -31,9 +31,10 @@ Projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin.
    cd gaze_project
    ```
 
-2. **Model Dosyasını İndirin:**
-   Projenin ihtiyaç duyduğu eğitilmiş model dosyasına aşağıdaki linkten erişip indirin ve projenin ana dizinine (`.py` dosyalarıyla aynı yere) kopyalayın.
-   - **Veri setini indir:** [mpiigaze_finetuned_v2.keras](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
+2. **Eğitilmiş Model ve Veri Seti:**
+   Projenin ihtiyaç duyduğu eğitilmiş model dosyası (`mpiigaze_finetuned_v2.keras`) zaten bu depoda bulunmaktadır.
+   Eğer modelin ince ayar (fine-tuning) için kullanıldığı veri setini de indirmek isterseniz:
+   - **Veri setini indir:** [Gaze Veri Seti](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
 
 3. **Python Sanal Ortamı Oluşturun ve Aktive Edin:**
    Bu proje, belirli kütüphane sürümlerine ihtiyaç duymaktadır. Kütüphanelerin sistem genelindeki paketlerle çakışmaması için bir sanal ortam kullanılması şiddetle tavsiye edilir.
