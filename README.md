@@ -29,7 +29,7 @@ Projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin.
 
 2. **Model Dosyasını İndirin:**
    Projenin ihtiyaç duyduğu eğitilmiş model dosyasına aşağıdaki linkten erişip indirin ve projenin ana dizinine (`.py` dosyalarıyla aynı yere) kopyalayın.
-   - **Modeli İndir:** [mpiigaze_finetuned.keras](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
+   - **Veri setini indir:** [mpiigaze_finetuned.keras](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
 
 3. **Python Sanal Ortamı Oluşturun ve Aktive Edin:**
    Bu proje, belirli kütüphane sürümlerine ihtiyaç duymaktadır. Kütüphanelerin sistem genelindeki paketlerle çakışmaması için bir sanal ortam kullanılması şiddetle tavsiye edilir.
