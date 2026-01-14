@@ -1,6 +1,6 @@
 # Kalibrasyonsuz Göz Takip Sistemi
 
-Bu proje, bir web kamerası kullanarak gerçek zamanlı olarak kullanıcının göz hareketlerini takip eden ve fare imlecini ekranda buna göre hareket ettiren bir sistemdir. Herhangi bir kalibrasyon işlemi gerektirmez ve çeşitli göz hareketleriyle (göz kırpma, göz kısma, odaklanma) tıklama, yakınlaştırma, uzaklaştırma ve sayfa kaydırma gibi gelişmiş bilgisayar kontrolü özellikleri sunar.
+Bu proje, bir web kamerası kullanarak gerçek zamanlı olarak kullanıcının göz hareketlerini takip eden ve fare imlecini ekranda buna göre hareket ettiren bir sistemdir. Herhangi bir kalibrasyon işlemi gerektirmez ve çeşitli göz hareketleriyle (göz kırpma, göz kısma, odaklanma) sol tıklama, sağ tıklama, yakınlaştırma, uzaklaştırma ve sayfa kaydırma gibi gelişmiş bilgisayar kontrolü özellikleri sunar.
 
 ## ✨ Özellikler
 
@@ -8,7 +8,8 @@ Bu proje, bir web kamerası kullanarak gerçek zamanlı olarak kullanıcının g
 - **Kalibrasyonsuz:** Kullanıcıya özel uzun kalibrasyon seansları gerektirmez.
 - **Akıllı İmleç Düzeltme:** Zamanla kullanıcının bakışındaki küçük sapmaları öğrenerek imleç kontrolünü iyileştirir (`implicit_bias`).
 - **Gelişmiş Göz Hareketleriyle Kontrol:**
-  - **Tıklama:** Kısa göz kırpma hareketi ile.
+  - **Sol Tıklama:** Normal (çift gözle) kısa göz kırpma hareketi ile.
+  - **Sağ Tıklama:** Sadece sağ gözü kırpma hareketi ile.
   - **Yakınlaştırma (Zoom In):** Gözleri kısma hareketi ile.
   - **Uzaklaştırma (Zoom Out):** Uzun göz kırpma (gözleri 1 saniyeden uzun süre kapalı tutma) ile.
   - **Akıcı Sayfa Kaydırma:** Ekranın üst veya alt kenarlarına odaklanarak.
@@ -58,7 +59,8 @@ Uygulama başladığında web kameranız açılacak ve ekranda bir pencere gör�
 
 ### Göz Hareketleriyle Komutlar
 
-- **Tıklama:** İmleci istediğiniz yere getirin ve normal, **kısa bir göz kırpma** yapın.
+- **Sol Tıklama:** İmleci istediğiniz yere getirin ve normal, **iki gözünüzle kısa bir göz kırpma** yapın.
+- **Sağ Tıklama:** İmleci istediğiniz yere getirin ve sadece **sağ gözünüzü kısa bir şekilde kırpın**.
 - **Yakınlaştırma (Zoom In):** İmleci yakınlaştırmak istediğiniz pencereye getirin ve **gözlerinizi hafifçe kısın**. Bu, `Ctrl + Fare Tekerleği Yukarı` komutunu taklit ederek yakınlaştırma yapar.
 - **Uzaklaştırma (Zoom Out):** İmleci uzaklaştırmak istediğiniz pencereye getirin ve **gözlerinizi 1 saniyeden uzun süre kapalı tutun**. Bu, `Ctrl + Fare Tekerleği Aşağı` komutunu taklit ederek uzaklaştırma yapar.
 - **Sayfa Kaydırma:** İmleci kaydırmak istediğiniz pencereye getirin.

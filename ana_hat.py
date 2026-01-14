@@ -114,30 +114,26 @@ def main():
     print(f"Ekran Çözünürlüğü: {screen_w}x{screen_h}")
 
     # --- Akıcı Kaydırma Ayarları ---
-    SCROLL_ZONE_HEIGHT = 70  # Ekranın üst/altındaki aktif bölge yüksekliği (piksel)
-    SCROLL_ACTIVATION_DWELL = 0.6  # Kaydırmayı başlatmak için bekleme süresi (saniye)
-    SCROLL_SPEED = 40  # Kaydırma hızı (pozitif = aşağı, negatif = yukarı)
-    SCROLL_COOLDOWN = 0.05  # Kaydırma komutları arası bekleme süresi
+    SCROLL_ZONE_HEIGHT = 70
+    SCROLL_ACTIVATION_DWELL = 0.6
+    SCROLL_SPEED = 40
+    SCROLL_COOLDOWN = 0.05
     last_scroll_time = 0
 
     # --- Göz Hareketi Eylem Ayarları ---
-    SQUINT_THRESHOLD = 0.019 # Göz kısma eşiği
-    BLINK_THRESHOLD = 0.012  # Göz kırpma eşiği (daha kapalı)
-    ACTION_COOLDOWN = 0.8    # Eylemler arası genel bekleme süresi
-    SQUINT_COOLDOWN = 0.4    # Göz kısarak sürekli zoom yapmak için bekleme süresi
-    LONG_BLINK_DURATION = 0.6 # Uzun göz kırpmanın minimum süresi (saniye)
+    SQUINT_THRESHOLD = 0.019
+    BLINK_THRESHOLD = 0.012
+    ACTION_COOLDOWN = 0.8
+    SQUINT_COOLDOWN = 0.4
+    LONG_BLINK_DURATION = 0.5
     last_action_time = 0
     last_squint_time = 0
 
-    # Göz kırpma süresini ölçmek için durum değişkenleri
-    is_in_blink = False
-    blink_start_time = 0
-
-    # --- Aktif Köşeler Ayarları (Devre Dışı) ---
-    # CORNER_SIZE = 60
-    # CORNER_DWELL_TIME = 1.0
-    # HOT_CORNER_COOLDOWN = 3.0
-    # last_hot_corner_time = 0
+    # Göz kırpma ve durum takibi için değişkenler
+    is_left_eye_closed_state = False
+    is_right_eye_closed_state = False
+    left_eye_closed_timestamp = 0.0
+    right_eye_closed_timestamp = 0.0
 
     print("Uygulama başlatılıyor, modeller yükleniyor...")
     model = tf.keras.models.load_model("mpiigaze_finetuned_v2.keras", compile=False)
@@ -152,9 +148,14 @@ def main():
     fix_logger = FixationLogger()
     
     L_EYE = [33,133,160,159,158,157,173]
+    R_EYE = [362,382,381,380,374,373,398]
     L_IRIS = [474,475,476,477]
 
-    # Başlangıç ve durum değişkenleri
+    LEFT_EYE_TOP_LM = 159
+    LEFT_EYE_BOTTOM_LM = 145
+    RIGHT_EYE_TOP_LM = 386 
+    RIGHT_EYE_BOTTOM_LM = 374 
+
     nx, ny = 0.5, 0.5
     was_fixating = False
     
@@ -166,9 +167,8 @@ def main():
     print("✅ Uygulama başlatıldı. Çıkmak için 'ESC' tuşuna basın.")
     
     try:
-        # --- Ana Döngü ---
         while cap.isOpened():
-            learning_was_triggered_this_frame = False # Görsel geri bildirim için bayrak
+            learning_was_triggered_this_frame = False
             ret, frame = cap.read()
             if not ret: break
             frame = cv2.flip(frame, 1)
@@ -178,15 +178,18 @@ def main():
 
             if res.multi_face_landmarks:
                 lm = res.multi_face_landmarks[0].landmark
-                cx = int(np.mean([lm[i].x * w for i in L_EYE]))
-                cy = int(np.mean([lm[i].y * h for i in L_EYE]))
-                roi = frame[cy-40:cy+40, cx-60:cx+60]
-
-                if roi.size > 0:
-                    current_time = time.time() # Zamanı döngünün başında bir kez al
-                    pitch, yaw = model.predict(preprocess_eye(roi), verbose=0)[0]
+                
+                cx_left = int(np.mean([lm[i].x * w for i in L_EYE]))
+                cy_left = int(np.mean([lm[i].y * h for i in L_EYE]))
+                roi_left = frame[cy_left-40:cy_left+40, cx_left-60:cx_left+60]
+                
+                cx = int(np.mean([lm[i].x * w for i in L_EYE + R_EYE]))
+                cy = int(np.mean([lm[i].y * h for i in L_EYE + R_EYE]))
+                
+                if roi_left.size > 0:
+                    current_time = time.time()
+                    pitch, yaw = model.predict(preprocess_eye(roi_left), verbose=0)[0]
                     
-                    # Sinyal işleme ve birleştirme
                     nx_m, ny_m = flow.update(pitch, yaw)
                     dx, dy, mag = pupil.get([lm[i] for i in L_IRIS], w, h)
                     conf = intent_filter.confidence(nx_m, ny_m, mag)
@@ -197,16 +200,13 @@ def main():
                     
                     nx_s, ny_s = smoother.update(nx, ny)
                     
-                    # Odaklanma tespiti
                     fix_logger.update(nx_s, ny_s)
                     is_currently_fixating = fix_logger.is_fixating() and fix_logger.fixation_duration() > 0.2
                     
-                    # Bias düzeltmesini uygula (imleç konumu için)
                     final_x_pre_clip, final_y_pre_clip = bias.apply(nx_s, ny_s)
 
-                    # Aktif Öğrenme ve İmleç Kilidi Mantığı
                     if is_currently_fixating:
-                        if not was_fixating: # Odaklanma yeni başladıysa
+                        if not was_fixating:
                             fix_x, fix_y = fix_logger.get_fixation_center()
                             
                             if ONLINE_LEARNING and conf > 0.5:
@@ -215,92 +215,102 @@ def main():
                                 bias.learn(nx_s, ny_s, error_x, error_y, weight=conf * 0.5)
                                 learning_was_triggered_this_frame = True
                             
-                            # Odaklanma anındaki bias düzeltmesini al ve imleci kilitle
                             lock_x, lock_y = bias.apply(fix_x, fix_y)
                             final_x = np.clip(lock_x, 0, 1)
                             final_y = np.clip(lock_y, 0, 1)
                     else:
-                        # Odaklanma yoksa, imleci serbestçe hareket ettir
                         final_x = np.clip(final_x_pre_clip, 0, 1)
                         final_y = np.clip(final_y_pre_clip, 0, 1)
 
                     pyautogui.moveTo(final_x * screen_w, final_y * screen_h, duration=0.1)
                     
-                    scroll_progress = 0.0 # Kaydırma dolum çubuğu için ilerleme
-                    # --- Akıcı Kaydırma Mantığı ---
+                    scroll_progress = 0.0
                     if fix_logger.is_fixating():
-                        # Odaklanma süresine göre kaydırma ilerlemesini hesapla
-                        if fix_logger.fixation_duration() > 0: # Negatif duration'dan kaçın
+                        if fix_logger.fixation_duration() > 0:
                             scroll_progress = min(1.0, fix_logger.fixation_duration() / SCROLL_ACTIVATION_DWELL)
 
-                        # Üst bölgeyi kontrol et (yukarı kaydırma)
                         if final_y * screen_h < SCROLL_ZONE_HEIGHT:
                             if scroll_progress >= 1.0 and (current_time - last_scroll_time) > SCROLL_COOLDOWN:
                                 pyautogui.scroll(SCROLL_SPEED)
                                 last_scroll_time = current_time
                         
-                        # Alt bölgeyi kontrol et (aşağı kaydırma)
                         elif final_y * screen_h > screen_h - SCROLL_ZONE_HEIGHT:
                             if scroll_progress >= 1.0 and (current_time - last_scroll_time) > SCROLL_COOLDOWN:
                                 pyautogui.scroll(-SCROLL_SPEED)
                                 last_scroll_time = current_time
 
                     # --- Göz Hareketleri ile Eylem Mantığı ---
-                    left_top = lm[159]
-                    left_bottom = lm[145]
-                    blink_ratio = left_bottom.y - left_top.y
-                    
-                    is_fully_closed = blink_ratio < BLINK_THRESHOLD
-                    is_squinting = blink_ratio < SQUINT_THRESHOLD and not is_fully_closed
+                    left_eye_ratio = lm[LEFT_EYE_BOTTOM_LM].y - lm[LEFT_EYE_TOP_LM].y
+                    right_eye_ratio = lm[RIGHT_EYE_BOTTOM_LM].y - lm[RIGHT_EYE_TOP_LM].y
 
-                    # 1. Göz Kısma (Yakınlaştırma) - Sürekli tetiklenebilir
-                    if is_squinting:
-                        if (current_time - last_squint_time) > SQUINT_COOLDOWN and (current_time - last_action_time) > SQUINT_COOLDOWN:
-                            with pyautogui.hold('ctrl'):
-                                pyautogui.scroll(120)
-                            print(">>> SQUINT ZOOM IN <<<")
-                            last_squint_time = current_time
-                            last_action_time = current_time
+                    is_left_closed_now = left_eye_ratio < BLINK_THRESHOLD
+                    is_right_closed_now = right_eye_ratio < BLINK_THRESHOLD
+                    is_squinting_now = (left_eye_ratio < SQUINT_THRESHOLD and not is_left_closed_now) or \
+                                     (right_eye_ratio < SQUINT_THRESHOLD and not is_right_closed_now)
                     
-                    # 2. Göz Kırpma (Tıklama veya Uzaklaştırma) - Göz açıldığında tetiklenir
-                    # Göz yeni kapandıysa, başlangıç zamanını kaydet
-                    if is_fully_closed and not is_in_blink:
-                        is_in_blink = True
-                        blink_start_time = current_time
-                    
-                    # Göz yeni açıldıysa, süreyi hesapla ve eylemi gerçekleştir
-                    elif not is_fully_closed and is_in_blink:
-                        blink_duration = current_time - blink_start_time
-                        is_in_blink = False
+                    action_taken_this_frame = False
 
-                        if (current_time - last_action_time) > ACTION_COOLDOWN:
-                            # Uzun Göz Kırpma -> Uzaklaştırma
-                            if blink_duration > LONG_BLINK_DURATION:
+                    # State Updates: Note when eyes close
+                    if is_left_closed_now and not is_left_eye_closed_state:
+                        is_left_eye_closed_state = True
+                        left_eye_closed_timestamp = current_time
+                    if is_right_closed_now and not is_right_eye_closed_state:
+                        is_right_eye_closed_state = True
+                        right_eye_closed_timestamp = current_time
+                        
+                    # Action Processing
+                    if (current_time - last_action_time) > ACTION_COOLDOWN:
+                        # 1. LONG BILATERAL BLINK (ZOOM OUT)
+                        if is_left_eye_closed_state and is_right_eye_closed_state:
+                            if (current_time - left_eye_closed_timestamp) > LONG_BLINK_DURATION:
                                 with pyautogui.hold('ctrl'):
                                     pyautogui.scroll(-120)
                                 print(">>> LONG BLINK ZOOM OUT <<<")
                                 last_action_time = current_time
-                            # Kısa Göz Kırpma -> Tıklama
-                            else:
-                                pyautogui.click()
-                                print(">>> CLICK <<<")
-                                last_action_time = current_time
+                                action_taken_this_frame = True
+                                is_left_eye_closed_state, is_right_eye_closed_state = False, False 
+                        
+                        # 2. SQUINT (ZOOM IN)
+                        elif not action_taken_this_frame and is_squinting_now:
+                            if (current_time - last_squint_time) > SQUINT_COOLDOWN:
+                                with pyautogui.hold('ctrl'):
+                                    pyautogui.scroll(120)
+                                print(">>> SQUINT ZOOM IN <<<")
+                                last_squint_time, last_action_time = current_time, current_time
+                                action_taken_this_frame = True
+                        
+                        # 3. UNILATERAL RIGHT WINK (RIGHT CLICK)
+                        elif not action_taken_this_frame and (not is_right_closed_now and is_right_eye_closed_state) and not is_left_eye_closed_state:
+                            pyautogui.click(button='right')
+                            print(">>> RIGHT CLICK <<<")
+                            last_action_time = current_time
+                            action_taken_this_frame = True
+                            is_right_eye_closed_state = False 
+                        
+                        # 4. BILATERAL or UNILATERAL LEFT BLINK (LEFT CLICK)
+                        elif not action_taken_this_frame and (not is_left_closed_now and is_left_eye_closed_state):
+                            pyautogui.click(button='left')
+                            print(">>> LEFT CLICK <<<")
+                            last_action_time = current_time
+                            action_taken_this_frame = True
+                            is_left_eye_closed_state = False
+
+                    # Reset states if eyes are open and no action was taken on opening
+                    if not is_left_closed_now: is_left_eye_closed_state = False
+                    if not is_right_closed_now: is_right_eye_closed_state = False
 
                     was_fixating = is_currently_fixating
 
-                    # --- Görsel Geri Bildirim ---
-                    # Odaklanma durumunu mavi bir halka ile görselleştir (Hata Ayıklama)
                     if fix_logger.is_fixating():
-                        cv2.circle(frame, (cx, cy), 48, (255, 0, 0), 2) # Mavi halka
+                        cv2.circle(frame, (cx, cy), 48, (255, 0, 0), 2)
 
                     if learning_was_triggered_this_frame:
-                        cv2.circle(frame, (cx, cy), 45, (0, 255, 0), 2) # Yeşil halka
+                        cv2.circle(frame, (cx, cy), 45, (0, 255, 0), 2)
                     
-                    # Kaydırma dolum çubuğunu görselleştir
-                    if scroll_progress > 0: # Sadece ilerleme varsa çiz
-                        bar_height_px = int(scroll_progress * h) # Tam yükseklik
-                        cv2.rectangle(frame, (0, h - bar_height_px), (15, h), (0, 255, 0), -1) # Sol altta yeşil dolan çubuk
-                        cv2.rectangle(frame, (0, 0), (15, h), (100, 100, 100), 1) # Gri çerçeve
+                    if scroll_progress > 0:
+                        bar_height_px = int(scroll_progress * h)
+                        cv2.rectangle(frame, (0, h - bar_height_px), (15, h), (0, 255, 0), -1)
+                        cv2.rectangle(frame, (0, 0), (15, h), (100, 100, 100), 1)
 
             cv2.imshow("Gaze Tracker - (Aktif Öğrenme) - Kamera (ESC)", frame)
             if cv2.waitKey(1) & 0xFF == 27:
