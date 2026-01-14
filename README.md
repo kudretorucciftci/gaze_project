@@ -1,14 +1,17 @@
 # Kalibrasyonsuz Göz Takip Sistemi
 
-Bu proje, bir web kamerası kullanarak gerçek zamanlı olarak kullanıcının göz hareketlerini takip eden ve fare imlecini ekranda buna göre hareket ettiren bir sistemdir. Herhangi bir kalibrasyon işlemi gerektirmez ve göz kırpma ile tıklama özelliğine sahiptir.
+Bu proje, bir web kamerası kullanarak gerçek zamanlı olarak kullanıcının göz hareketlerini takip eden ve fare imlecini ekranda buna göre hareket ettiren bir sistemdir. Herhangi bir kalibrasyon işlemi gerektirmez ve çeşitli göz hareketleriyle (göz kırpma, göz kısma, odaklanma) tıklama, yakınlaştırma, uzaklaştırma ve sayfa kaydırma gibi gelişmiş bilgisayar kontrolü özellikleri sunar.
 
 ## ✨ Özellikler
 
 - **Gerçek Zamanlı Göz Takibi:** Standart bir web kamerası ile çalışır.
 - **Kalibrasyonsuz:** Kullanıcıya özel uzun kalibrasyon seansları gerektirmez.
-- **Göz Kırpma ile Tıklama:** Göz kırpma hareketini algılayarak fare tıklaması yapabilir.
-- **Ayarlanabilir Tıklama Hassasiyeti:** Tıklama özelliğinin hassasiyeti ve hızı kod içerisinden kolayca ayarlanabilir.
 - **Akıllı İmleç Düzeltme:** Zamanla kullanıcının bakışındaki küçük sapmaları öğrenerek imleç kontrolünü iyileştirir (`implicit_bias`).
+- **Gelişmiş Göz Hareketleriyle Kontrol:**
+  - **Tıklama:** Kısa göz kırpma hareketi ile.
+  - **Yakınlaştırma (Zoom In):** Gözleri kısma hareketi ile.
+  - **Uzaklaştırma (Zoom Out):** Uzun göz kırpma (gözleri 1 saniyeden uzun süre kapalı tutma) ile.
+  - **Akıcı Sayfa Kaydırma:** Ekranın üst veya alt kenarlarına odaklanarak.
 
 ## 🚀 Kurulum
 
@@ -29,7 +32,7 @@ Projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin.
 
 2. **Model Dosyasını İndirin:**
    Projenin ihtiyaç duyduğu eğitilmiş model dosyasına aşağıdaki linkten erişip indirin ve projenin ana dizinine (`.py` dosyalarıyla aynı yere) kopyalayın.
-   - **Veri setini indir:** [mpiigaze_finetuned.keras](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
+   - **Veri setini indir:** [mpiigaze_finetuned_v2.keras](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
 
 3. **Python Sanal Ortamı Oluşturun ve Aktive Edin:**
    Bu proje, belirli kütüphane sürümlerine ihtiyaç duymaktadır. Kütüphanelerin sistem genelindeki paketlerle çakışmaması için bir sanal ortam kullanılması şiddetle tavsiye edilir.
@@ -51,36 +54,53 @@ Kurulum tamamlandıktan sonra, ana uygulamayı çalıştırmak için aşağıdak
 ```sh
 python ana_hat.py
 ```
+Uygulama başladığında web kameranız açılacak ve ekranda bir pencere görünecektir. İmleciniz, göz hareketlerinizi takip etmeye başlayacaktır. Uygulamayı kapatmak için kamera penceresi etkinken klavyeden `ESC` tuşuna basmanız yeterlidir.
+
+### Göz Hareketleriyle Komutlar
+
+- **Tıklama:** İmleci istediğiniz yere getirin ve normal, **kısa bir göz kırpma** yapın.
+- **Yakınlaştırma (Zoom In):** İmleci yakınlaştırmak istediğiniz pencereye getirin ve **gözlerinizi hafifçe kısın**. Bu, `Ctrl + Fare Tekerleği Yukarı` komutunu taklit ederek yakınlaştırma yapar.
+- **Uzaklaştırma (Zoom Out):** İmleci uzaklaştırmak istediğiniz pencereye getirin ve **gözlerinizi 1 saniyeden uzun süre kapalı tutun**. Bu, `Ctrl + Fare Tekerleği Aşağı` komutunu taklit ederek uzaklaştırma yapar.
+- **Sayfa Kaydırma:** İmleci kaydırmak istediğiniz pencereye getirin.
+  - **Aşağı Kaydırmak İçin:** Bakışınızı ekranın **en alt kenarına** getirin ve yaklaşık 0.6 saniye sabit tutun.
+  - **Yukarı Kaydırmak İçin:** Bakışınızı ekranın **en üst kenarına** getirin ve yaklaşık 0.6 saniye sabit tutun.
+  Kaydırmayı durdurmak için bakışınızı kenardan çekmeniz yeterlidir.
 
 ### Kamera Seçimi
 Proje varsayılan olarak sistemdeki ilk kamerayı (genellikle 0 ID'li) kullanır. Eğer telefonunuzu (örneğin **iVCam** gibi uygulamalarla) veya başka bir harici kamerayı kullanıyorsanız, `ana_hat.py` dosyasındaki `cap = cv2.VideoCapture(0)` satırındaki `0` değerini, kullandığınız kameranın bilgisayarınızdaki cihaz ID'sine (`0`, `1`, `2` vb.) göre değiştirmeniz gerekebilir.
-
-Uygulama başladığında web kameranız açılacak ve ekranda bir pencere görünecektir. İmleciniz, göz hareketlerinizi takip etmeye başlayacaktır.
-
-Uygulamayı kapatmak için kamera penceresi etkinken klavyeden `ESC` tuşuna basmanız yeterlidir.
 
 ## 🛠️ Yöntem ve Model
 
 Bu proje, birkaç farklı teknolojiyi bir araya getirir:
 
 - **Yüz ve Göz Tespiti:** Yüz ve gözlerin kritik noktalarını (landmarks) gerçek zamanlı olarak tespit etmek için **Google Mediapipe** kütüphanesi kullanılmaktadır.
-- **Bakış Tahmini:** Göz bölgesinden alınan görüntü, **MPIIGaze** veri seti üzerinde önceden eğitilmiş ve daha sonra kullanıcı verileriyle ince ayar (fine-tuning) yapılmış bir **TensorFlow/Keras** modeli (`mpiigaze_finetuned.keras`) tarafından işlenir. Bu model, göz görüntüsünden bakışın yönünü (pitch ve yaw açıları) tahmin eder.
+- **Bakış Tahmini:** Göz bölgesinden alınan görüntü, **MPIIGaze** veri seti üzerinde önceden eğitilmiş ve daha sonra kullanıcı verileriyle ince ayar (fine-tuning) yapılmış bir **TensorFlow/Keras** modeli (`mpiigaze_finetuned_v2.keras`) tarafından işlenir. Bu model, göz görüntüsünden bakışın yönünü (pitch ve yaw açıları) tahmin eder.
 - **İmleç Kontrolü:** Modelden gelen tahminler, bir dizi filtreleme ve yumuşatma işleminden geçirilerek fare imlecinin akıcı bir şekilde hareket etmesi sağlanır.
 
 ## ⚙️ Yapılandırma
 
-### Göz Kırpma ile Tıklama
-
-Tıklama özelliğinin hassasiyetini ve hızını `ana_hat.py` dosyasının içindeki aşağıdaki değişkenleri düzenleyerek kişisel tercihinize göre ayarlayabilirsiniz:
+Tüm kontrol mekanizmalarının hassasiyetini `ana_hat.py` dosyasının içindeki aşağıdaki değişkenleri düzenleyerek kişisel tercihinize göre ayarlayabilirsiniz:
 
 ```python
 def main():
     # ...
-    # --- Göz Kırpma ile Tıklama Ayarları ---
-    BLINK_THRESHOLD = 0.01  # Gözün kapanma eşiği (küçük değer = daha kapalı)
-    CLICK_COOLDOWN = 1.5    # Tıklamalar arası bekleme süresi (saniye)
+    # --- Akıcı Kaydırma Ayarları ---
+    SCROLL_ZONE_HEIGHT = 70  # Ekranın üst/altındaki aktif bölge yüksekliği (piksel)
+    SCROLL_ACTIVATION_DWELL = 0.6  # Kaydırmayı başlatmak için bekleme süresi (saniye)
+
+    # --- Göz Hareketi Eylem Ayarları ---
+    SQUINT_THRESHOLD = 0.019 # Göz kısma eşiği (daha büyük değer = daha hassas)
+    BLINK_THRESHOLD = 0.012  # Göz kırpma eşiği (daha küçük değer = daha kapalı göz)
+    ACTION_COOLDOWN = 0.8    # Eylemler arası genel bekleme süresi
+    LONG_BLINK_DURATION = 0.6 # Uzun göz kırpmanın minimum süresi (saniye)
     # ...
 ```
 
-- `BLINK_THRESHOLD`: Bir göz kırpmasının algılanması için gözün ne kadar kapanması gerektiğini belirler. Değeri düşürürseniz, tıklama için gözünüzü daha belirgin kapatmanız gerekir. Değeri artırırsanız, daha hassas hale gelir.
-- `CLICK_COOLDOWN`: İki tıklama arasında geçmesi gereken minimum süreyi saniye cinsinden belirler. Ardışık istenmeyen tıklamaları önlemek için kullanılır.
+- **Kaydırma Ayarları:**
+    - `SCROLL_ZONE_HEIGHT`: Kaydırmayı tetikleyen kenar şeridinin kalınlığını ayarlar.
+    - `SCROLL_ACTIVATION_DWELL`: Kaydırmanın başlaması için kenarda ne kadar beklemeniz gerektiğini ayarlar.
+- **Eylem Ayarları:**
+    - `SQUINT_THRESHOLD` ve `BLINK_THRESHOLD`: Göz kısma ve göz kırpma arasındaki hassasiyet dengesini ayarlar.
+    - `ACTION_COOLDOWN`: İki komut arasında geçmesi gereken minimum süreyi belirler.
+    - `LONG_BLINK_DURATION`: Bir göz kırpmasının "uzun" olarak kabul edilmesi için gereken minimum süreyi belirler.
+```
