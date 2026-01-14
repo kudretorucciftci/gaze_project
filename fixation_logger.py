@@ -7,7 +7,7 @@ from collections import deque
 
 class FixationLogger:
     def __init__(self,
-                 velocity_thresh=0.04,
+                 velocity_thresh=0.09,
                  min_duration=0.10,
                  refractory=0.35,
                  max_fixation_points=50):
