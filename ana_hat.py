@@ -114,7 +114,7 @@ def main():
     print(f"Ekran Çözünürlüğü: {screen_w}x{screen_h}")
 
     print("Uygulama başlatılıyor, modeller yükleniyor...")
-    model = tf.keras.models.load_model("mpiigaze_finetuned.keras", compile=False)
+    model = tf.keras.models.load_model("mpiigaze_finetuned_v2.keras", compile=False)
     mp_face = mp.solutions.face_mesh.FaceMesh(refine_landmarks=True)
     
     # Yardımcı sınıfları başlat

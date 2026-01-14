@@ -17,7 +17,7 @@ gaze_final/
 gaze_final_venv/
 gaze_venv/
 
-# Python derleme önbellekleri
+# Python derleme önbelleklegemri
 __pycache__/
 *.pyc
 *.pyd
