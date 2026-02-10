@@ -9,7 +9,7 @@ import pyautogui
 import time
 from collections import deque
 
-from gaze_a3_a4_a5 import TemporalSmoother, BiasMap, IntentDetector
+from gaze_utils import TemporalSmoother, BiasMap, IntentDetector
 from fixation_logger import FixationLogger
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -108,19 +108,19 @@ def preprocess_eye(roi):
 
 # =====================================================
 def main():
-    # --- Kurulum ---
+    # --- Setup ---
     pyautogui.FAILSAFE = False
     screen_w, screen_h = pyautogui.size()
-    print(f"Ekran Çözünürlüğü: {screen_w}x{screen_h}")
+    print(f"Screen Resolution: {screen_w}x{screen_h}")
 
-    # --- Akıcı Kaydırma Ayarları ---
+    # --- Smooth Scrolling Settings ---
     SCROLL_ZONE_HEIGHT = 70
     SCROLL_ACTIVATION_DWELL = 0.6
     SCROLL_SPEED = 40
     SCROLL_COOLDOWN = 0.05
     last_scroll_time = 0
 
-    # --- Göz Hareketi Eylem Ayarları ---
+    # --- Eye Gesture Action Settings ---
     SQUINT_THRESHOLD = 0.019
     BLINK_THRESHOLD = 0.012
     ACTION_COOLDOWN = 0.8
@@ -129,17 +129,17 @@ def main():
     last_action_time = 0
     last_squint_time = 0
 
-    # Göz kırpma ve durum takibi için değişkenler
+    # Variables for blink and state tracking
     is_left_eye_closed_state = False
     is_right_eye_closed_state = False
     left_eye_closed_timestamp = 0.0
     right_eye_closed_timestamp = 0.0
 
-    print("Uygulama başlatılıyor, modeller yükleniyor...")
+    print("Initializing application, loading models...")
     model = tf.keras.models.load_model("mpiigaze_finetuned_v2.keras", compile=False)
     mp_face = mp.solutions.face_mesh.FaceMesh(refine_landmarks=True)
     
-    # Yardımcı sınıfları başlat
+    # Initialize helper classes
     flow = GazeFlowManager()
     pupil = PupilTracker()
     intent_filter = GazeIntentFilter()
@@ -161,10 +161,10 @@ def main():
     
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌ Kamera açılamadı.")
+        print("❌ Failed to open camera.")
         return
 
-    print("✅ Uygulama başlatıldı. Çıkmak için 'ESC' tuşuna basın.")
+    print("✅ Application started. Press 'ESC' to exit.")
     
     try:
         while cap.isOpened():
@@ -212,7 +212,8 @@ def main():
                             if ONLINE_LEARNING and conf > 0.5:
                                 error_x = fix_x - nx_s
                                 error_y = fix_y - ny_s
-                                bias.learn(nx_s, ny_s, error_x, error_y, weight=conf * 0.5)
+                                # Dynamic Weighted Learning
+                                bias.learn(nx_s, ny_s, error_x, error_y, fix_logger.fixation_duration(), conf)
                                 learning_was_triggered_this_frame = True
                             
                             lock_x, lock_y = bias.apply(fix_x, fix_y)
@@ -222,7 +223,7 @@ def main():
                         final_x = np.clip(final_x_pre_clip, 0, 1)
                         final_y = np.clip(final_y_pre_clip, 0, 1)
 
-                    pyautogui.moveTo(final_x * screen_w, final_y * screen_h, duration=0.1)
+                    pyautogui.moveTo(final_x * screen_w, final_y * screen_h)
                     
                     scroll_progress = 0.0
                     if fix_logger.is_fixating():
@@ -239,7 +240,7 @@ def main():
                                 pyautogui.scroll(-SCROLL_SPEED)
                                 last_scroll_time = current_time
 
-                    # --- Göz Hareketleri ile Eylem Mantığı ---
+                    # --- Action Logic with Eye Gestures (WITHOUT Reward/Penalty) ---
                     left_eye_ratio = lm[LEFT_EYE_BOTTOM_LM].y - lm[LEFT_EYE_TOP_LM].y
                     right_eye_ratio = lm[RIGHT_EYE_BOTTOM_LM].y - lm[RIGHT_EYE_TOP_LM].y
 
@@ -249,28 +250,22 @@ def main():
                                      (right_eye_ratio < SQUINT_THRESHOLD and not is_right_closed_now)
                     
                     action_taken_this_frame = False
-
-                    # State Updates: Note when eyes close
-                    if is_left_closed_now and not is_left_eye_closed_state:
-                        is_left_eye_closed_state = True
-                        left_eye_closed_timestamp = current_time
-                    if is_right_closed_now and not is_right_eye_closed_state:
-                        is_right_eye_closed_state = True
-                        right_eye_closed_timestamp = current_time
-                        
-                    # Action Processing
+                    
                     if (current_time - last_action_time) > ACTION_COOLDOWN:
-                        # 1. LONG BILATERAL BLINK (ZOOM OUT)
-                        if is_left_eye_closed_state and is_right_eye_closed_state:
+                        # 1. Long Bilateral Blink (Zoom Out)
+                        if is_left_closed_now and is_right_closed_now:
+                            if not is_left_eye_closed_state: left_eye_closed_timestamp = current_time
+                            is_left_eye_closed_state = True
+                            
                             if (current_time - left_eye_closed_timestamp) > LONG_BLINK_DURATION:
                                 with pyautogui.hold('ctrl'):
                                     pyautogui.scroll(-120)
                                 print(">>> LONG BLINK ZOOM OUT <<<")
                                 last_action_time = current_time
                                 action_taken_this_frame = True
-                                is_left_eye_closed_state, is_right_eye_closed_state = False, False 
+                                is_left_eye_closed_state = False
                         
-                        # 2. SQUINT (ZOOM IN)
+                        # 2. Squinting (Zoom In)
                         elif not action_taken_this_frame and is_squinting_now:
                             if (current_time - last_squint_time) > SQUINT_COOLDOWN:
                                 with pyautogui.hold('ctrl'):
@@ -278,32 +273,37 @@ def main():
                                 print(">>> SQUINT ZOOM IN <<<")
                                 last_squint_time, last_action_time = current_time, current_time
                                 action_taken_this_frame = True
-                        
-                        # 3. UNILATERAL RIGHT WINK (RIGHT CLICK)
-                        elif not action_taken_this_frame and (not is_right_closed_now and is_right_eye_closed_state) and not is_left_eye_closed_state:
-                            pyautogui.click(button='right')
-                            print(">>> RIGHT CLICK <<<")
-                            last_action_time = current_time
-                            action_taken_this_frame = True
-                            is_right_eye_closed_state = False 
-                        
-                        # 4. BILATERAL or UNILATERAL LEFT BLINK (LEFT CLICK)
-                        elif not action_taken_this_frame and (not is_left_closed_now and is_left_eye_closed_state):
-                            pyautogui.click(button='left')
-                            print(">>> LEFT CLICK <<<")
-                            last_action_time = current_time
-                            action_taken_this_frame = True
-                            is_left_eye_closed_state = False
 
-                    # Reset states if eyes are open and no action was taken on opening
-                    if not is_left_closed_now: is_left_eye_closed_state = False
-                    if not is_right_closed_now: is_right_eye_closed_state = False
+                    # 3. Short Blinks (Right/Left Click)
+                    if not is_left_closed_now and is_left_eye_closed_state:
+                        if not action_taken_this_frame and not is_right_eye_closed_state:
+                            if (current_time - last_action_time) > ACTION_COOLDOWN:
+                                pyautogui.click(button='left')
+                                print(">>> LEFT CLICK (Bilateral/Short) <<<")
+                                last_action_time = current_time
+                        is_left_eye_closed_state = False
+                    
+                    if not is_right_closed_now and is_right_eye_closed_state:
+                        if not action_taken_this_frame and not is_left_eye_closed_state:
+                             if (current_time - last_action_time) > ACTION_COOLDOWN:
+                                pyautogui.click(button='right')
+                                print(">>> RIGHT CLICK (Unilateral) <<<")
+                                last_action_time = current_time
+                        is_right_eye_closed_state = False
 
+                    # Update eye closed states
+                    if is_left_closed_now and not is_left_eye_closed_state:
+                        is_left_eye_closed_state = True
+                        left_eye_closed_timestamp = current_time
+                    if is_right_closed_now and not is_right_eye_closed_state:
+                        is_right_eye_closed_state = True
+                        right_eye_closed_timestamp = current_time
+                    
                     was_fixating = is_currently_fixating
 
                     if fix_logger.is_fixating():
                         cv2.circle(frame, (cx, cy), 48, (255, 0, 0), 2)
-
+                    
                     if learning_was_triggered_this_frame:
                         cv2.circle(frame, (cx, cy), 45, (0, 255, 0), 2)
                     
@@ -312,17 +312,17 @@ def main():
                         cv2.rectangle(frame, (0, h - bar_height_px), (15, h), (0, 255, 0), -1)
                         cv2.rectangle(frame, (0, 0), (15, h), (100, 100, 100), 1)
 
-            cv2.imshow("Gaze Tracker - (Aktif Öğrenme) - Kamera (ESC)", frame)
+            cv2.imshow("Gaze Tracker - (Active Learning) - Camera (ESC)", frame)
             if cv2.waitKey(1) & 0xFF == 27:
                 break
     
     except KeyboardInterrupt:
-        print("ℹ️ Kullanıcı tarafından sonlandırıldı (CTRL+C).")
+        print("ℹ️ Terminated by user (CTRL+C).")
     finally:
-        print("Uygulama kapatılıyor.")
+        print("Closing application.")
         if ONLINE_LEARNING:
             bias.save()
-            print("✅ Öğrenilen sapma (bias) ayarları kaydedildi.")
+            print("✅ Learned bias settings saved.")
         cap.release()
         cv2.destroyAllWindows()
 

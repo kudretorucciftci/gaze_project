@@ -10,9 +10,9 @@ from tensorflow.keras.callbacks import EarlyStopping
 # =====================================================
 # CONFIG
 # =====================================================
-CSV_PATH   = "kullanici_verisi/annotations.csv"
-MODEL_IN   = "../mpiigaze_finetuned.keras"
-MODEL_OUT  = "../Modeller/mpiigaze_finetuned_v2.keras"
+CSV_PATH   = "user_data/annotations.csv"
+MODEL_IN   = "../mpiigaze_finetuned_v2.keras"
+MODEL_OUT  = "../models/mpiigaze_finetuned_v2.keras"
 
 IMG_W, IMG_H = 60, 36
 BATCH   = 16
@@ -20,7 +20,7 @@ EPOCHS  = 30
 LR      = 1e-5
 
 # =====================================================
-# DATA LOADER (CSV ESNEK OKUMA)
+# DATA LOADER (CSV FLEXIBLE READING)
 # =====================================================
 def load_dataset(csv_path):
     X, y = [], []
@@ -30,7 +30,10 @@ def load_dataset(csv_path):
 
     with open(csv_path, "r", newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
-        next(reader) # Skip header row
+        try:
+            next(reader) # Skip header row
+        except StopIteration:
+            return np.array([], dtype=np.float32), np.array([], dtype=np.float32)
 
         for row in reader:
             if len(row) < 3:
@@ -43,16 +46,16 @@ def load_dataset(csv_path):
                 pitch = float(row[1])
                 yaw   = float(row[2])
             except ValueError:
-                print(f"Uyarı: Geçersiz pitch/yaw değeri satırı atlandı: {row}")
+                print(f"Warning: Invalid pitch/yaw value line skipped: {row}")
                 continue
 
             if not os.path.exists(img_full_path):
-                print(f"Uyarı: Resim dosyası bulunamadı: {img_full_path}")
+                print(f"Warning: Image file not found: {img_full_path}")
                 continue
 
             img = cv2.imread(img_full_path)
             if img is None:
-                print(f"Uyarı: Resim yüklenemedi (muhtemelen bozuk): {img_full_path}")
+                print(f"Warning: Image could not be loaded (possibly corrupted): {img_full_path}")
                 continue
 
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -67,23 +70,24 @@ def load_dataset(csv_path):
 # =====================================================
 # MAIN
 # =====================================================
-print("📥 Dataset yükleniyor...")
+print("📥 Loading dataset...")
 X, y = load_dataset(CSV_PATH)
-print(f"✔ Toplam örnek: {len(X)}")
+print(f"✔ Total samples: {len(X)}")
 
 if len(X) < 50:
-    raise RuntimeError(f"❌ Yetersiz veri ({len(X)} örnek). Fine-tune için en az 50 örnek gerekli.")
+    print(f"❌ Insufficient data ({len(X)} samples). At least 50 samples are required for fine-tuning.")
+    exit(1)
 
 # =====================================================
 # MODEL LOAD
 # =====================================================
-print("📦 Model yükleniyor...")
+print("📦 Loading model...")
 model = tf.keras.models.load_model(MODEL_IN, compile=False)
 
 # =====================================================
-# FREEZE (SADECE SON KATMANLAR ÖĞRENSİN)
+# FREEZE (ONLY LAST LAYERS LEARN)
 # =====================================================
-# Temel modelin (base_model) içindeki katmanların eğitilebilirliğini ayarlayalım
+# Set adjustability of layers within the base model
 for layer in model.layers:
     name = layer.name.lower()
     if "conv" in name or "bn" in name:
@@ -104,7 +108,7 @@ model.summary()
 # =====================================================
 # TRAIN
 # =====================================================
-print("🚀 Fine-tuning başlıyor...")
+print("🚀 Fine-tuning starting...")
 history = model.fit(
     X, y,
     batch_size=BATCH,
@@ -123,5 +127,8 @@ history = model.fit(
 # =====================================================
 # SAVE
 # =====================================================
+if not os.path.exists(os.path.dirname(MODEL_OUT)):
+    os.makedirs(os.path.dirname(MODEL_OUT))
+
 model.save(MODEL_OUT)
-print(f"✅ Fine-tuned model kaydedildi → {MODEL_OUT}")
+print(f"✅ Fine-tuned model saved → {MODEL_OUT}")

@@ -1,12 +1,14 @@
 # Proje dosyaları için .gitignore
 # Gereksiz ve kişisel dosyaların GitHub'a gönderilmesini engeller
 
-# Arşiv klasörü
-Arsiv/
+# Archive folder
+archive/
 
-# Modeller klasörü (boyutları büyük olabilir ve hassas olabilir)
-Modeller/
-Egitim/
+# Models and Training folders (large files)
+models/
+training/
+training_pipeline/
+
 
 # Kişisel kalibrasyon ayarları
 implicit_bias.npz

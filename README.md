@@ -1,109 +1,108 @@
-# Kalibrasyonsuz Göz Takip Sistemi
+# Calibration-Free Gaze Tracking System
 
-Bu proje, bir web kamerası kullanarak gerçek zamanlı olarak kullanıcının göz hareketlerini takip eden ve fare imlecini ekranda buna göre hareket ettiren bir sistemdir. Herhangi bir kalibrasyon işlemi gerektirmez ve çeşitli göz hareketleriyle (göz kırpma, göz kısma, odaklanma) sol tıklama, sağ tıklama, yakınlaştırma, uzaklaştırma ve sayfa kaydırma gibi gelişmiş bilgisayar kontrolü özellikleri sunar.
+This project is a system that uses a webcam to track the user's eye movements in real-time and moves the mouse cursor on the screen accordingly. It does not require any calibration process and offers advanced computer control features such as left-click, right-click, zoom in, zoom out, and smooth page scrolling with various eye gestures (blinking, squinting, focusing).
 
-## ✨ Özellikler
+## ✨ Features
 
-- **Gerçek Zamanlı Göz Takibi:** Standart bir web kamerası ile çalışır.
-- **Kalibrasyonsuz:** Kullanıcıya özel uzun kalibrasyon seansları gerektirmez.
-- **Akıllı İmleç Düzeltme:** Zamanla kullanıcının bakışındaki küçük sapmaları öğrenerek imleç kontrolünü iyileştirir (`implicit_bias`).
-- **Gelişmiş Göz Hareketleriyle Kontrol:**
-  - **Sol Tıklama:** Normal (çift gözle) kısa göz kırpma hareketi ile.
-  - **Sağ Tıklama:** Sadece sağ gözü kırpma hareketi ile.
-  - **Yakınlaştırma (Zoom In):** Her iki gözü kısma hareketi ile.
-  - **Uzaklaştırma (Zoom Out):** Uzun göz kırpma (gözleri 1 saniyeden uzun süre kapalı tutma) ile.
-  - **Akıcı Sayfa Kaydırma:** Ekranın üst veya alt kenarlarına odaklanarak.
+- **Real-Time Gaze Tracking:** Works with a standard webcam.
+- **Calibration-Free:** No need for lengthy user-specific calibration sessions.
+- **Smart Cursor Correction:** Improves cursor control by learning small deviations in the user's gaze over time (`implicit_bias`).
+- **Advanced Eye Gesture Control:**
+  - **Left Click:** With a normal (bilateral) short blink.
+  - **Right Click:** By blinking only the right eye.
+  - **Zoom In:** By squinting both eyes.
+  - **Zoom Out:** By a long blink (holding eyes closed for longer than 0.5 seconds).
+  - **Smooth Page Scrolling:** By focusing on the top or bottom edges of the screen.
 
-## 🚀 Kurulum
+## 🚀 Installation
 
-Projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin.
+Follow the steps below to run the project on your local machine.
 
-### Gereksinimler
+### Requirements
 
 - Python 3.x
-- `pip` (Python paket yöneticisi)
+- `pip` (Python package manager)
 
-### Adımlar
+### Steps
 
-1. **Projeyi Klonlayın:**
+1. **Clone the Project:**
    ```sh
    git clone https://github.com/kudretorucciftci/gaze_project.git
    cd gaze_project
    ```
 
-2. **Eğitilmiş Model ve Veri Seti:**
-   Projenin ihtiyaç duyduğu eğitilmiş model dosyası (`mpiigaze_finetuned_v2.keras`) zaten bu depoda bulunmaktadır.
-   Eğer modelin ince ayar (fine-tuning) için kullanıldığı veri setini de indirmek isterseniz:
-   - **Veri setini indir:** [Gaze Veri Seti](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
+2. **Trained Model and Dataset:**
+   The trained model file (`mpiigaze_finetuned_v2.keras`) required by the project is already in this repository.
+   If you want to download the dataset used for fine-tuning the model:
+   - **Download dataset:** [Gaze Dataset](https://drive.google.com/file/d/1F-DPjKiTrWjcpQ4Pguj3wMl9axEx06x9/view?usp=drive_link)
 
-3. **Python Sanal Ortamı Oluşturun ve Aktive Edin:**
-   Bu proje, belirli kütüphane sürümlerine ihtiyaç duymaktadır. Kütüphanelerin sistem genelindeki paketlerle çakışmaması için bir sanal ortam kullanılması şiddetle tavsiye edilir.
+3. **Create and Activate a Python Virtual Environment:**
+   This project requires specific library versions. It is highly recommended to use a virtual environment to avoid conflicts with system-wide packages.
    ```sh
    # Windows
    python -m venv gaze_final
    .\gaze_final\Scripts\activate
    ```
 
-4. **Bağımlılıkları Yükleyin:**
-   Proje için gerekli tüm kütüphaneler `requirements.txt` dosyasında listelenmiştir. Bunları aşağıdaki komutla yükleyin:
+4. **Install Dependencies:**
+   All necessary libraries are listed in the `requirements.txt` file. Install them using the following command:
    ```sh
    pip install -r requirements.txt
    ```
 
-## 🏃‍♀️ Kullanım
+## 🏃‍♀️ Usage
 
-Kurulum tamamlandıktan sonra, ana uygulamayı çalıştırmak için aşağıdaki komutu kullanın:
+After installation, use the following command to run the main application:
 ```sh
-python ana_hat.py
+python gaze_tracking.py
 ```
-Uygulama başladığında web kameranız açılacak ve ekranda bir pencere görünecektir. İmleciniz, göz hareketlerinizi takip etmeye başlayacaktır. Uygulamayı kapatmak için kamera penceresi etkinken klavyeden `ESC` tuşuna basmanız yeterlidir.
+When the application starts, your webcam will open and a window will appear on the screen. Your cursor will start following your eye movements. To close the application, simply press the `ESC` key while the camera window is active.
 
-### Göz Hareketleriyle Komutlar
+### Eye Gesture Commands
 
-- **Sol Tıklama:** İmleci istediğiniz yere getirin ve normal, **iki gözünüzle kısa bir göz kırpma** yapın.
-- **Sağ Tıklama:** İmleci istediğiniz yere getirin ve sadece **sağ gözünüzü kısa bir şekilde kırpın**.
-- **Yakınlaştırma (Zoom In):** İmleci yakınlaştırmak istediğiniz pencereye getirin ve **gözlerinizi hafifçe kısın**. Bu, `Ctrl + Fare Tekerleği Yukarı` komutunu taklit ederek yakınlaştırma yapar.
-- **Uzaklaştırma (Zoom Out):** İmleci uzaklaştırmak istediğiniz pencereye getirin ve **gözlerinizi 1 saniyeden uzun süre kapalı tutun**. Bu, `Ctrl + Fare Tekerleği Aşağı` komutunu taklit ederek uzaklaştırma yapar.
-- **Sayfa Kaydırma:** İmleci kaydırmak istediğiniz pencereye getirin.
-  - **Aşağı Kaydırmak İçin:** Bakışınızı ekranın **en alt kenarına** getirin ve yaklaşık 0.6 saniye sabit tutun.
-  - **Yukarı Kaydırmak İçin:** Bakışınızı ekranın **en üst kenarına** getirin ve yaklaşık 0.6 saniye sabit tutun.
-  Kaydırmayı durdurmak için bakışınızı kenardan çekmeniz yeterlidir.
+- **Left Click:** Move the cursor where you want and perform a short **bilateral blink**.
+- **Right Click:** Move the cursor where you want and perform a short **right-eye blink**.
+- **Zoom In:** Move the cursor to the window you want to zoom and **squint your eyes**. This simulates the `Ctrl + Mouse Wheel Up` command.
+- **Zoom Out:** Move the cursor to the window you want to zoom out and **keep your eyes closed for more than 0.5 seconds**. This simulates the `Ctrl + Mouse Wheel Down` command.
+- **Page Scrolling:** Move the cursor to the window you want to scroll.
+  - **To Scroll Down:** Move your gaze to the **bottom edge** of the screen and hold for about 0.6 seconds.
+  - **To Scroll Up:** Move your gaze to the **top edge** of the screen and hold for about 0.6 seconds.
+  To stop scrolling, move your gaze away from the edge.
 
-### Kamera Seçimi
-Proje varsayılan olarak sistemdeki ilk kamerayı (genellikle 0 ID'li) kullanır. Eğer telefonunuzu (örneğin **iVCam** gibi uygulamalarla) veya başka bir harici kamerayı kullanıyorsanız, `ana_hat.py` dosyasındaki `cap = cv2.VideoCapture(0)` satırındaki `0` değerini, kullandığınız kameranın bilgisayarınızdaki cihaz ID'sine (`0`, `1`, `2` vb.) göre değiştirmeniz gerekebilir.
+### Camera Selection
+The project uses the first camera in the system by default (usually ID 0). If you are using your phone (e.g. via applications like **iVCam**) or another external camera, you may need to change the `0` value in the `cap = cv2.VideoCapture(0)` line in `gaze_tracking.py` to the device ID of your camera (`0`, `1`, `2`, etc.).
 
-## 🛠️ Yöntem ve Model
+## 🛠️ Method and Model
 
-Bu proje, birkaç farklı teknolojiyi bir araya getirir:
+This project combines several different technologies:
 
-- **Yüz ve Göz Tespiti:** Yüz ve gözlerin kritik noktalarını (landmarks) gerçek zamanlı olarak tespit etmek için **Google Mediapipe** kütüphanesi kullanılmaktadır.
-- **Bakış Tahmini:** Göz bölgesinden alınan görüntü, **MPIIGaze** veri seti üzerinde önceden eğitilmiş ve daha sonra kullanıcı verileriyle ince ayar (fine-tuning) yapılmış bir **TensorFlow/Keras** modeli (`mpiigaze_finetuned_v2.keras`) tarafından işlenir. Bu model, göz görüntüsünden bakışın yönünü (pitch ve yaw açıları) tahmin eder.
-- **İmleç Kontrolü:** Modelden gelen tahminler, bir dizi filtreleme ve yumuşatma işleminden geçirilerek fare imlecinin akıcı bir şekilde hareket etmesi sağlanır.
+- **Face and Eye Detection:** **Google Mediapipe** library is used to detect facial and eye landmarks in real-time.
+- **Gaze Estimation:** The image captured from the eye region is processed by a **TensorFlow/Keras** model (`mpiigaze_finetuned_v2.keras`) pre-trained on the **MPIIGaze** dataset and then fine-tuned with user data. This model estimates the gaze direction (pitch and yaw angles) from the eye image.
+- **Cursor Control:** Predictions from the model pass through a series of filtering and smoothing processes to ensure smooth movement of the mouse cursor.
 
-## ⚙️ Yapılandırma
+## ⚙️ Configuration
 
-Tüm kontrol mekanizmalarının hassasiyetini `ana_hat.py` dosyasının içindeki aşağıdaki değişkenleri düzenleyerek kişisel tercihinize göre ayarlayabilirsiniz:
+You can adjust the sensitivity of all control mechanisms according to your personal preference by editing the following variables inside the `gaze_tracking.py` file:
 
 ```python
 def main():
     # ...
-    # --- Akıcı Kaydırma Ayarları ---
-    SCROLL_ZONE_HEIGHT = 70  # Ekranın üst/altındaki aktif bölge yüksekliği (piksel)
-    SCROLL_ACTIVATION_DWELL = 0.6  # Kaydırmayı başlatmak için bekleme süresi (saniye)
+    # --- Smooth Scrolling Settings ---
+    SCROLL_ZONE_HEIGHT = 70  # Height of active zone at top/bottom of screen (pixels)
+    SCROLL_ACTIVATION_DWELL = 0.6  # Dwell time to start scrolling (seconds)
 
-    # --- Göz Hareketi Eylem Ayarları ---
-    SQUINT_THRESHOLD = 0.019 # Göz kısma eşiği (daha büyük değer = daha hassas)
-    BLINK_THRESHOLD = 0.012  # Göz kırpma eşiği (daha küçük değer = daha kapalı göz)
-    ACTION_COOLDOWN = 0.8    # Eylemler arası genel bekleme süresi
-    LONG_BLINK_DURATION = 0.6 # Uzun göz kırpmanın minimum süresi (saniye)
+    # --- Eye Gesture Action Settings ---
+    SQUINT_THRESHOLD = 0.019 # Squint threshold (higher value = more sensitive)
+    BLINK_THRESHOLD = 0.012  # Blink threshold (smaller value = more closed eye)
+    ACTION_COOLDOWN = 0.8    # General cooldown between actions
+    LONG_BLINK_DURATION = 0.6 # Minimum duration for long blink (seconds)
     # ...
 ```
 
-- **Kaydırma Ayarları:**
-    - `SCROLL_ZONE_HEIGHT`: Kaydırmayı tetikleyen kenar şeridinin kalınlığını ayarlar.
-    - `SCROLL_ACTIVATION_DWELL`: Kaydırmanın başlaması için kenarda ne kadar beklemeniz gerektiğini ayarlar.
-- **Eylem Ayarları:**
-    - `SQUINT_THRESHOLD` ve `BLINK_THRESHOLD`: Göz kısma ve göz kırpma arasındaki hassasiyet dengesini ayarlar.
-    - `ACTION_COOLDOWN`: İki komut arasında geçmesi gereken minimum süreyi belirler.
-    - `LONG_BLINK_DURATION`: Bir göz kırpmasının "uzun" olarak kabul edilmesi için gereken minimum süreyi belirler.
-```
+- **Scrolling Settings:**
+    - `SCROLL_ZONE_HEIGHT`: Sets the thickness of the edge bar that triggers scrolling.
+    - `SCROLL_ACTIVATION_DWELL`: Sets how long you need to wait at the edge for scrolling to start.
+- **Action Settings:**
+    - `SQUINT_THRESHOLD` and `BLINK_THRESHOLD`: Balances the sensitivity between squinting and blinking.
+    - `ACTION_COOLDOWN`: Sets the minimum time between two commands.
+    - `LONG_BLINK_DURATION`: Sets the minimum duration for a blink to be considered "long".

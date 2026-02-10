@@ -63,19 +63,21 @@ class BiasMap:
             np.clip(y + self.by[iy, ix], 0, 1),
         )
 
-    def learn(self, x, y, dx, dy, weight=1.0, learning_rate=None):
+    def learn(self, x, y, dx, dy, fixation_duration, confidence):
         if abs(dx) + abs(dy) < 1e-4:
             return
-        
-        lr_to_use = learning_rate if learning_rate is not None else self.lr
+
+        duration_weight = np.clip(fixation_duration / 0.5, 0.1, 1.0)
+        confidence_weight = np.clip(confidence, 0.2, 1.0)
+        final_weight = duration_weight * confidence_weight
 
         ix, iy = self._cell(x, y)
         self.bx[iy, ix] = np.clip(
-            self.bx[iy, ix] + dx * lr_to_use * weight,
+            self.bx[iy, ix] + dx * self.lr * final_weight,
             -self.maxb, self.maxb
         )
         self.by[iy, ix] = np.clip(
-            self.by[iy, ix] + dy * lr_to_use * weight,
+            self.by[iy, ix] + dy * self.lr * final_weight,
             -self.maxb, self.maxb
         )
 
